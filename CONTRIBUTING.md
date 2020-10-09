@@ -5,8 +5,7 @@ This document is a work in process and details some loose guidelines for contrib
 # Quality of Life
 - **Comment your code.** The author of the code should not be the only one who understands it.
 - Divide large blocks of code into multiple functions - it is difficult to focus on code that has too many moving parts, and therefore harder to debug.
-- Name variables such that their purpose is easily identifiable
-- Keep indentation/naming style consistent within a document. `snake_case` and K&R is nice.
+- Do not prematurely optimize, especially if it makes things harder to understand.
 
 # Stability
 - **Do not commit to master.** Create branches for changes and create pull requests so that other contributors can review them.
@@ -30,3 +29,14 @@ if (condition)
 
 # Code Review
 Check if the submitted code looks good, then check if it is following these guidelines.
+
+# Pull/Push
+Always pull before you begin working on something new. If you encounter a merge conflict, double check you actually resolved it instead of deleting someone's code.
+
+# Commits
+- Commit messages should describe what you changed in past tense. Example: "Added syntax tree data structure" or "Updated properties of node struct"
+  - Commit messages should be coherent and spelled correctly.
+  - Treat commit messages relatively seriously, they are meant to aid debugging.
+
+  
+  
