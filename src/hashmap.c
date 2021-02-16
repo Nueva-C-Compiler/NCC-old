@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdint.h>
 
 //#if !(__STDC__==1 && __STDC_VERSION >= 201112L)
 //#error C11 compiler required.
@@ -11,12 +12,13 @@ static size_t hash_str(const char* str)
 {
     size_t hash = 5381;
     int c;
-    // equivalent to hash * 33 + c, which is 
-    while (c = *str++) hash = ((hash << 5) + hash) + c;
+    // equivalent to hash * 33 + c, which is
+    while ((c = *str++)) hash = ((hash << 5) + hash) + c;
     return hash;
 }
 
 #define hash(x) _Generic((x), int: (size_t) x,   \
+                         uint64_t: (size_t) x % UINT32_MAX,   \
                          const char*: hash_str)
 
 typedef struct hashmap {
@@ -41,16 +43,19 @@ static void _hashmap_cons(hashmap_t* h, size_t key_sz, size_t val_sz, size_t len
 
 static void _hashmap_ins(hashmap_t* h, size_t index, void* key, void* val)
 {
-    memcpy(((char*)h->vals)+index*4, val, h->v_sz);
-    memcpy(((char*)h->keys)+index*4, key, h->k_sz);
+    memcpy(h->vals+(index*h->v_sz), val, h->v_sz);
+    memcpy(h->keys+(index*h->k_sz), key, h->k_sz);
 }
 
-#define hashmap_ins(hmap, k, v) _hashmap_ins(hmap, hash(k), &k, &v)
+#define hashmap_ins_arr(hmap, k, v) _hashmap_ins(hmap, hash(k) % hmap->len, &k, &v)
+#define hashmap_ins(T, hmap, k, v) ((T*)(hmap)->vals)[hash(k) % (hmap)->len] = v;
 
-static void _hashmap_get(hashmap_t* h, size_t index)
+static void* _hashmap_get(hashmap_t* h, size_t index)
 {
-    return 
+    return h->vals + (index * h->v_sz);
 }
+
+#define hashmap_get(T, hmap, k) *((T*)_hashmap_get(hmap, hash(k) % (hmap)->len))
 
 int main()
 {
@@ -58,5 +63,6 @@ int main()
     hashmap_cons(&h, int, int, 10);
     int k = 2;
     int v = 3;
-    hashmap_ins(&h, v, k);
+    hashmap_ins(int, &h, k, v);
+    printf("%d\n", hashmap_get(int, &h, 2));
 }
