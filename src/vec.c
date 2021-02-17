@@ -1,6 +1,8 @@
 #include "vec.h"
 #include <stdlib.h>
 #include <limits.h>
+#include <stdint.h>
+#include <math.h>
 
 struct Vec vec_new() {
     struct Vec vec = {
@@ -16,7 +18,7 @@ bool vec_grow(Vec* self, size_t bytes) {
 
     if (self->cap <= new_len) {
         // Find a suitable capacity
-        size_t new_cap = max(32, self->cap);
+        size_t new_cap = fmax(32, self->cap);
         do {
             if (new_cap >= SIZE_MAX / 2)
                 return false;  // Fail on overflow
@@ -41,7 +43,7 @@ bool vec_grow(Vec* self, size_t bytes) {
 }
 
 void vec_shrink(Vec* self, size_t bytes) {
-    self->len -= min(bytes, self->len);
+    self->len -= fmin(bytes, self->len);
 
     if (self->len == 0) {
         // NOTE: `free` is NOOP for `NULL` pointers.

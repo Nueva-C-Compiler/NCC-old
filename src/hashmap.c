@@ -67,30 +67,19 @@ int check_type(const char* type, const char* expected, const char* ctx) {
 }
 #endif
 
-static int isempty(void* ptr, size_t len)
-{
-    char* p = (char*)ptr;
-    for (int i = 0; i < len; i++) {
-        if (p[i] != 0) return 1;
-    }
-    return 0;
-}
-
 static void _hashmap_load_check(hashmap_t* h)
 {
     h->filled++;
-    if ((h->filled / h->len) < h->max_load) return;
+    if (((float)h->filled / h->len) < h->max_load) return;
     h->len *= 2;
-    printf("Resized to %zu\n", h->len);
     void* tmpk = h->keys;
     void* tmpv = h->vals;
     h->vals = malloc(h->len*h->v_sz);
     h->keys = calloc(h->len, h->k_sz);
-    for (int i = 0; i < h->len; i++) {
-        if (isempty(tmpk+i*h->k_sz, h->k_sz)) continue; // Will break if default constructed value not 0 FIXME
-        size_t index = hash_str(tmpk+(i*h->k_sz)); // hash_str here is temporary solution FIXME?
-        memcpy(h->vals+index, tmpv+index, h->v_sz);
-        memcpy(h->keys+index, tmpk+index, h->k_sz);
+    for (int i = 0; i < h->len / 2; i++) {
+        size_t index = *(int*)(tmpk+i*h->k_sz) % h->len; // A generalized hash function is needed. FIXME!
+        memcpy(h->vals+(index*h->v_sz), tmpv+(index*h->v_sz), h->v_sz);
+        memcpy(h->keys+(index*h->k_sz), tmpk+(index*h->k_sz), h->k_sz);
     }
     free(tmpk);
     free(tmpv);
@@ -116,4 +105,4 @@ static void* _hashmap_get(hashmap_t* h, size_t index, size_t v_sz, const char* v
     return h->vals + (index * v_sz);
 }
 
-#define hashmap_get(T, hmap, k) *((T*)_hashmap_get(hmap, hash(k) % (hmap)->len, sizeof(T), #T))
+#define hashmap_get(T, hmap, k) (*((T*)_hashmap_get(hmap, hash(k) % (hmap)->len, sizeof(T), #T)))
