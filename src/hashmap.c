@@ -24,24 +24,26 @@ size_t hash(char* p, size_t sz)
 bool iszero(void *p, size_t len)
 {
     bool iszero = true;
-    
     for (int i = 0; i < len; i++){
-        if (*(char*)p++) {
-            p--;
+        if (*(char*)p != 0) {
             iszero = false;
             break;
         }
+        p++;
     }
     return iszero;
 }
 
+
 void hashmap_init(hashmap_t* h, size_t ksize, size_t vsize)
 {
     h->keys = calloc(HASHMAP_INIT_SIZE, ksize);
+    memset(h->keys, 0, HASHMAP_INIT_SIZE * ksize);
     h->k_sz = ksize;
     h->vals = malloc(vsize * HASHMAP_INIT_SIZE);
     h->v_sz = vsize;
     h->len = HASHMAP_INIT_SIZE;
+    h->filled = 0;
 }
 
 
@@ -57,7 +59,7 @@ void hashmap_resize(hashmap_t* h)
         if (!iszero(h->keys + (off*h->k_sz), h->len)) {
             memcpy(h->vals + (off*h->v_sz), tempv + (off*h->v_sz), h->v_sz);
             memcpy(h->keys + (off*h->k_sz), tempk + (off*h->k_sz), h->k_sz);
-        }        
+        }
     }
     free(tempk);
     free(tempv);
@@ -66,14 +68,21 @@ void hashmap_resize(hashmap_t* h)
 
 int hashmap_set(hashmap_t* h, void* k, void* v)
 {
-    if ((float)hashmap_count(h) / h->len > 2/3) hashmap_resize(h);
+    printf("%f\n", (float)h->filled / h->len);
+    if ((float)h->filled / h->len > (float)2/3) hashmap_resize(h);
     size_t index = hash(k, h->k_sz) % h->len;
     for (size_t off = index; off < h->len; off+=1) {
-        if (memcmp(h->keys + (off*h->k_sz), k, h->k_sz) == 0 || iszero(h->keys + (off*h->k_sz), h->len)) {
+        if (memcmp(h->keys + (off*h->k_sz), k, h->k_sz) == 0) {
             memcpy(h->vals + (off*h->v_sz), v, h->v_sz);
             memcpy(h->keys + (off*h->k_sz), k, h->k_sz);
             return 0x0;
-        }        
+        }
+        if (iszero(h->keys + (off*h->k_sz), h->len)) {
+            h->filled++;
+            memcpy(h->vals + (off*h->v_sz), v, h->v_sz);
+            memcpy(h->keys + (off*h->k_sz), k, h->k_sz);
+            return 0x0;
+        }
     }
     return 0x1; 
 }
@@ -94,17 +103,6 @@ void* hashmap_get(hashmap_t* h, void* k)
 
 void hashmap_del()
 {
-}
-
-
-    
-size_t hashmap_count(hashmap_t* h)
-{
-    size_t sz = 0;
-    for (size_t off = 0; off < h->len; off+=1) {
-        if (!iszero(h->keys + (off * h->k_sz), h->len)) sz++;
-    }
-    return sz;
 }
 
 void hashmap_free()

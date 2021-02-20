@@ -4,6 +4,7 @@ typedef struct hashmap_t {
     size_t k_sz;
     size_t v_sz;
     size_t len;
+    size_t filled;
 } hashmap_t; 
 
 void hashmap_init(hashmap_t* h, size_t ksize, size_t vsize);
