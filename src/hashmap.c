@@ -9,6 +9,8 @@
 
 #define HASHMAP_INIT_SIZE 16
 
+// djb2 hash
+// http://www.cse.yorku.ca/~oz/hash.html
 size_t hash(char* p, size_t sz)
 {
     unsigned long hash = 5381;
@@ -21,6 +23,7 @@ size_t hash(char* p, size_t sz)
     return hash;
 }
 
+// Check if arbitrary block of memory is zero
 bool iszero(void *p, size_t len)
 {
     bool iszero = true;
@@ -35,48 +38,53 @@ bool iszero(void *p, size_t len)
 }
 
 
+// Initialize the hashmap pointed to by h.
 void hashmap_init(hashmap_t* h, size_t ksize, size_t vsize)
 {
+    // Keys and vals are in different arrays so unnecessary things aren't in cache
     h->keys = calloc(HASHMAP_INIT_SIZE, ksize);
-    memset(h->keys, 0, HASHMAP_INIT_SIZE * ksize);
-    h->k_sz = ksize;
     h->vals = malloc(vsize * HASHMAP_INIT_SIZE);
+    h->k_sz = ksize;
     h->v_sz = vsize;
     h->len = HASHMAP_INIT_SIZE;
-    h->filled = 0;
+    h->filled = 0; // Store # of filled keys for load factor calculation
 }
-
-
 
 void hashmap_resize(hashmap_t* h)
 {
     void* tempk = h->keys;
     void* tempv = h->vals;
     h->len *= 2;
+    // Simple to use calloc here because keys need to be initialized to zero.
     h->keys = calloc(h->len, h->k_sz);
     h->vals = malloc(h->len * h->v_sz);
+    // Copy all keys and values
     for (size_t off = 0; off < (h->len / 2); off++) {
-        if (!iszero(h->keys + (off*h->k_sz), h->len)) {
+        // Don't bother copying entries with empty keys 
+        if (!iszero(tempk + (off*h->k_sz), h->k_sz)) {
             memcpy(h->vals + (off*h->v_sz), tempv + (off*h->v_sz), h->v_sz);
             memcpy(h->keys + (off*h->k_sz), tempk + (off*h->k_sz), h->k_sz);
         }
-    }
+    }    
     free(tempk);
     free(tempv);
 }
 
 
 int hashmap_set(hashmap_t* h, void* k, void* v)
-{
+{  
     printf("%f\n", (float)h->filled / h->len);
+    // Check if load factor too high
     if ((float)h->filled / h->len > (float)2/3) hashmap_resize(h);
     size_t index = hash(k, h->k_sz) % h->len;
+    // Start at the hashed index, iterate until own key or empty key is found
     for (size_t off = index; off < h->len; off+=1) {
+        // Check if stored key at hashed index is equal to key: if so, replace value
         if (memcmp(h->keys + (off*h->k_sz), k, h->k_sz) == 0) {
             memcpy(h->vals + (off*h->v_sz), v, h->v_sz);
-            memcpy(h->keys + (off*h->k_sz), k, h->k_sz);
             return 0x0;
         }
+	// Check if stored key is zero: if so, copy key and value over
         if (iszero(h->keys + (off*h->k_sz), h->len)) {
             h->filled++;
             memcpy(h->vals + (off*h->v_sz), v, h->v_sz);
@@ -84,19 +92,22 @@ int hashmap_set(hashmap_t* h, void* k, void* v)
             return 0x0;
         }
     }
+    // Hashmap is full (this shouldn't ever happen unless default size is really low)
     return 0x1; 
 }
 
 // Returns address of value if it exists, otherwise returns 0x0 for no value or 0x1 for full table.
 void* hashmap_get(hashmap_t* h, void* k)
-{
-    
+{    
     size_t index = hash(k, h->k_sz) % h->len;
+    // Start at the hashed index, iterate until wanted key or empty key is found
     for (size_t off = index; off < h->len; off+=1) {
+        // Check if entry has correct key
         if (memcmp(h->keys + (off * h->k_sz), k, h->k_sz) == 0) {
             return h->vals + (off * h->v_sz);
         }
-        if (iszero(h->keys + (off * h->k_sz), h->len)) return 0x0;
+	// Empty entry means this key doesn't exist: return not found
+        if (iszero(h->keys + (off * h->k_sz), h->k_sz)) return 0x0;
     }
     return 0x1; 
 }
