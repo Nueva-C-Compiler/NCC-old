@@ -12,7 +12,11 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-
+      
+    - name: Checkout submodules
+      shell: bash
+      run: git submodule update --init --recursive
+      
     - name: Build
       working-directory: ${{github.workspace}}
       shell: bash
