@@ -5,11 +5,10 @@ typedef struct hashmap_t {
     size_t v_sz;
     size_t len;
     size_t filled;
-} hashmap_t; 
+} hashmap_t;
 
 void hashmap_init(hashmap_t* h, size_t ksize, size_t vsize);
 int hashmap_set(hashmap_t* h, void* k, void* v);
 void* hashmap_get(hashmap_t* h, void* k);
-void hashmap_del();
-size_t hashmap_count();
-void hashmap_free();
+int hashmap_del(hashmap_t* h, void* k);
+void hashmap_free(hashmap_t* h);

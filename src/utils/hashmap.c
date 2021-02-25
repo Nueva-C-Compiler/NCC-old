@@ -2,10 +2,11 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdint.h>
-#include <log.h>
 #include <stdbool.h>
 
 #include "hashmap.h"
+#include <log.h>
+
 
 #define HASHMAP_INIT_SIZE 16
 
@@ -55,7 +56,7 @@ void hashmap_resize(hashmap_t* h)
     void* tempk = h->keys;
     void* tempv = h->vals;
     h->len *= 2;
-    printf("Resizing to %d items\n", h->len);
+    log_debug("Resizing to %d items", h->len);
     // Simple to use calloc here because keys need to be initialized to zero.
     h->keys = calloc(h->len, h->k_sz);
     h->vals = malloc(h->len * h->v_sz);
@@ -64,41 +65,35 @@ void hashmap_resize(hashmap_t* h)
         // Don't bother copying entries with empty keys
         if (!iszero(tempk + (off*h->k_sz), h->k_sz)) {
             hashmap_set(h, tempk + (off*h->k_sz), tempv + (off*h->v_sz));
+            h->filled--;
         }
     }
     free(tempk);
     free(tempv);
 }
 
-
 int hashmap_set(hashmap_t* h, void* k, void* v)
 {
-    printf("%d filled, %d sz, so load factor %f\n", h->filled, h->len, (float)h->filled / h->len);
     // Check if load factor too high
+
     if ((float)h->filled / h->len > (float)2/3) hashmap_resize(h);
     size_t index = hash(k, h->k_sz) % h->len;
     int looped_once = 0;
-    printf("Hashed value to %zu\n",  index);
     // Start at the hashed index, iterate until own key or empty key is found
     for (size_t off = index; off < h->len; off+=1) {
-        printf("Checking offset %zu with key %d... ", off, *(int*)(h->keys + (off*h->k_sz)));
         // Check if stored key at hashed index is equal to key: if so, replace value
         if (memcmp(h->keys + (off*h->k_sz), k, h->k_sz) == 0) {
-            printf("correct key!\n");
             memcpy(h->vals + (off*h->v_sz), v, h->v_sz);
             return 0x0;
         }
-    // Check if stored key is zero: if so, copy key and value over
+        // Check if stored key is zero: if so, copy key and value over
         if (iszero(h->keys + (off*h->k_sz), h->k_sz)) {
             h->filled++;
-        printf("empty key!\n");
             memcpy(h->vals + (off*h->v_sz), v, h->v_sz);
             memcpy(h->keys + (off*h->k_sz), k, h->k_sz);
             return 0x0;
         }
-        printf("different key.\n");
         if (off == h->len-1 && looped_once == 0) {
-            printf("Wrapping around.\n");
             off = 0;
             looped_once = 1;
         }
@@ -111,35 +106,46 @@ int hashmap_set(hashmap_t* h, void* k, void* v)
 void* hashmap_get(hashmap_t* h, void* k)
 {
     size_t index = hash(k, h->k_sz) % h->len;
-    printf("Hashed value to %zu\n",  index);
     int looped_once = 0;
     // Start at the hashed index, iterate until wanted key or empty key is found
     for (size_t off = index; off < h->len; off+=1) {
-        printf("Checking offset %zu with key %d... ", off, *(int*)(h->keys + (off*h->k_sz)));
         // Check if entry has correct key
         if (memcmp(h->keys + (off * h->k_sz), k, h->k_sz) == 0) {
-            printf("correct key!\n");
             return h->vals + (off * h->v_sz);
         }
-    // Empty entry means this key doesn't exist: return not found
+        // Empty entry means this key doesn't exist: return not found
         if (iszero(h->keys + (off * h->k_sz), h->k_sz)) {
-            printf ("empty key.\n");
             return 0x0;
         }
-        printf("different key.\n");
         // If we hit the end, wrap back around the hashmap. Only do this once.
         if (off == h->len-1 && looped_once == 0) {
-            printf("Wrapping around.\n");
             off = 0;
             looped_once = 1;
         }
     }
 }
 
-void hashmap_del()
+int hashmap_del(hashmap_t* h, void* k)
 {
+    size_t index = hash(k, h->k_sz) % h->len;
+    int looped_once = 0;
+    for (size_t off = index; off < h->len; off+=1) {
+        if (memcmp(h->keys + (off * h->k_sz), k, h->k_sz) == 0) {
+            memset(h->keys + (off * h->v_sz), 0, h->k_sz);
+            // No reason to delete value, will just be overwritten next time.
+            return 0;
+        }
+        if (iszero(h->keys + (off * h->k_sz), h->k_sz)) return 1;
+        if (off == h->len-1 && looped_once == 0) {
+            off = 0;
+            looped_once = 1;
+        }
+    }
+    return 1;
 }
 
-void hashmap_free()
+void hashmap_free(hashmap_t* h)
 {
+    free(h->keys);
+    free(h->vals);
 }
