@@ -73,16 +73,22 @@ size_t vec_len(vec_t* self) {
 
 void* vec_at(vec_t* self, size_t index)
 {
-    return vec_raw(self) + index;
+    return vec_raw(self) + (index * self->elem_sz);
 }
 
-void vec_push(vec_t* self, void* value) {
+bool vec_push(vec_t* self, void* value) {
     do {
         if (!vec_grow(self, 1)) {
-            exit(EXIT_FAILURE);
+            return false;
         }
         memcpy(vec_at(self, vec_len(self) - 1), value, self->elem_sz);
     } while (false);
+    return true;
+}
+
+
+void vec_pop(vec_t* self) {
+    vec_shrink(self, 1 * self->elem_sz);
 }
 
 void vec_free(vec_t* self) {

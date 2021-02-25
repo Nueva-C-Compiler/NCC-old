@@ -16,13 +16,13 @@ typedef struct vec_t
 vec_t vec_new();
 
 /**
- * Grows the a vector by the specified byte count.
+ * Grows the a vector by the specified element count (internally elem_sz * count bytes).
  * @returns whether or not the vector was successfully resized.
  */
 bool vec_grow(vec_t* self, size_t count);
 
 /**
- * Shrink the a vector by the specified byte count.
+ * Shrink the a vector by the specified element count (internally elem_sz * count bytes).
  */
 void vec_shrink(vec_t* self, size_t count);
 
@@ -44,13 +44,14 @@ size_t vec_len(vec_t* self);
 void vec_free(vec_t* self);
 
 /**
- * Return pointer to vector element. It is undefined behavior to read past the allocated length.
+ * Return pointer to vector element at specified index (not byte). It is undefined behavior to read past the allocated length.
  */
 void* vec_at(vec_t* self, size_t index);
 
 /**
- * Push a value to the end of the vector. TODO Propagate OOM error.
+ * Push a value to the end of the vector.
+ * @returns whether or not the value was pushed successfully.
  */
-void vec_push(vec_t* self, void* value);
+bool vec_push(vec_t* self, void* value);
 
-#define vec_pop(p_self) vec_shrink(p_self, 1)
+void vec_pop(vec_t* self);
