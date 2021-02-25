@@ -2,57 +2,55 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
-typedef struct Vec
+typedef struct vec_t
 {
     void* buffer;
     size_t len;
     size_t cap;
-} Vec;
+    size_t elem_sz;
+} vec_t;
 
 /**
  * Creates a new vector with length `0`. Nothing is allocated at this stage.
  */
-Vec vec_new();
+vec_t vec_new();
 
 /**
  * Grows the a vector by the specified byte count.
  * @returns whether or not the vector was successfully resized.
  */
-bool vec_grow(Vec* self, size_t bytes);
+bool vec_grow(vec_t* self, size_t count);
 
 /**
  * Shrink the a vector by the specified byte count.
  */
-void vec_shrink(Vec* self, size_t bytes);
+void vec_shrink(vec_t* self, size_t count);
 
 /**
  * Returns a raw pointer to the start of the vector's backing memory. Only bytes `0 .. length` (exclusive upper bound) are
  * valid. The pointer may be `NULL` if the length of the vector is zero.
  * This pointer can be cast to an array of elements.
  */
-void* vec_raw(Vec* self);
+void* vec_raw(vec_t* self);
 
 /**
  * Returns the length of the vector in elements given the size of an element in bytes.
  */
-size_t vec_len(Vec* self, size_t elem_size);
+size_t vec_len(vec_t* self);
 
 /**
  * Frees a vector's backing memory. It is undefined behavior to reuse a freed vector.
  */
-void vec_free(Vec* self);
+void vec_free(vec_t* self);
 
-#define VEC_GROW(T, p_self, count) vec_grow(p_self, sizeof(T) * count)
-#define VEC_SHRINK(T, p_self, count) vec_shrink(p_self, sizeof(T) * count)
-#define VEC_LEN(T, p_self) vec_len(p_self, sizeof(T))
-#define VEC_AT(T, p_self, index) &(((T*) vec_raw(p_self))[index])
+/**
+ * Return pointer to vector element. It is undefined behavior to read past the allocated length.
+ */
+void* vec_at(vec_t* self, size_t index);
 
-// TODO: Propagate OOM instead of panicking.
-#define VEC_PUSH(T, p_self, value) do {                                   \
-    struct Vec* __vec_push_self = p_self;                                 \
-    if (!VEC_GROW(T, __vec_push_self, 1)) {                               \
-        exit(EXIT_FAILURE);                                               \
-    }                                                                     \
-    *VEC_AT(T, __vec_push_self, VEC_LEN(T, __vec_push_self) - 1) = value; \
-} while (false)
-#define VEC_POP(T, p_self) VEC_SHRINK(T, p_self, 1)
+/**
+ * Push a value to the end of the vector. TODO Propagate OOM error.
+ */
+void vec_push(vec_t* self, void* value);
+
+#define vec_pop(p_self) vec_shrink(p_self, 1)

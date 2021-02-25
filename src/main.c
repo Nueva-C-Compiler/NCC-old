@@ -4,35 +4,36 @@
 #include "utils/hashmap.h"
 
 int main() {
-    Vec test = vec_new();
-    VEC_PUSH(int, &test, 32);
-    log_debug("test[0] = %d", *VEC_AT(int, &test, 0));
+    vec_t test = vec_new(sizeof(int));
+    int val1 = 32;
+    vec_push(&test, &val1);
+    log_debug("test[0] = %d", *(int*)vec_at(&test, 0));
+    vec_shrink(&test, 3);
+    log_debug("Length: %zu", vec_len(&test));
+    int val2 = 32;
+    vec_push(&test, &val2);
+    log_debug("test[0] = %d", *(int*)vec_at(&test, 0));
+    int val3 = 64;
+    vec_push(&test, &val3);
+    log_debug("test[1] = %d", *(int*)vec_at(&test, 1));
 
-    VEC_SHRINK(int, &test, 3);
-    log_debug("Length: %zu", VEC_LEN(int, &test));
+    log_debug("Length: %zu", vec_len(&test));
 
-    VEC_PUSH(int, &test, 32);
-    log_debug("test[0] = %d", *VEC_AT(int, &test, 0));
+    vec_pop(&test);
+    log_debug("Length: %zu", vec_len(&test));
 
-    VEC_PUSH(int, &test, 64);
-    log_debug("test[1] = %d", *VEC_AT(int, &test, 1));
+    vec_pop(&test);
+    log_debug("Length: %zu", vec_len(&test));
 
-    log_debug("Length: %zu", VEC_LEN(int, &test));
+    vec_pop(&test);
+    log_debug("Length: %zu", vec_len(&test));
 
-    VEC_POP(int, &test);
-    log_debug("Length: %zu", VEC_LEN(int, &test));
+    vec_pop(&test);
+    log_debug("Length: %zu", vec_len(&test));
 
-    VEC_POP(int, &test);
-    log_debug("Length: %zu", VEC_LEN(int, &test));
-
-    VEC_POP(int, &test);
-    log_debug("Length: %zu", VEC_LEN(int, &test));
-
-    VEC_POP(int, &test);
-    log_debug("Length: %zu", VEC_LEN(int, &test));
-
-    VEC_PUSH(int, &test, 128);
-    log_debug("test[0] = %d", *VEC_AT(int, &test, 0));
+    int val4 = 128;
+    vec_push(&test, &val4);
+    log_debug("test[0] = %d", *(int*)vec_at(&test, 0));
 
     hashmap_t h;
     hashmap_init(&h, sizeof(int), sizeof(double));

@@ -2,19 +2,21 @@
 #include <stdlib.h>
 #include <limits.h>
 #include <stdint.h>
+#include <string.h>
 #include <math.h>
 
-struct Vec vec_new() {
-    struct Vec vec = {
+struct vec_t vec_new(size_t elem_size) {
+    struct vec_t vec = {
             .buffer = NULL,
             .len = 0,
             .cap = 0,
+            .elem_sz = elem_size,
     };
     return vec;
 }
 
-bool vec_grow(Vec* self, size_t bytes) {
-    size_t new_len = self->len + bytes;
+bool vec_grow(vec_t* self, size_t count) {
+    size_t new_len = self->len + (count * self->elem_sz);
 
     if (self->cap <= new_len) {
         // Find a suitable capacity
@@ -42,8 +44,8 @@ bool vec_grow(Vec* self, size_t bytes) {
     return true;
 }
 
-void vec_shrink(Vec* self, size_t bytes) {
-    self->len -= fmin(bytes, self->len);
+void vec_shrink(vec_t* self, size_t count) {
+    self->len -= fmin((count * self->elem_sz), self->len);
 
     if (self->len == 0) {
         // NOTE: `free` is NOOP for `NULL` pointers.
@@ -61,15 +63,29 @@ void vec_shrink(Vec* self, size_t bytes) {
     }
 }
 
-void* vec_raw(Vec* self) {
+void* vec_raw(vec_t* self) {
     return self->buffer;
 }
 
-size_t vec_len(Vec* self, size_t elem_size) {
-    return self->len / elem_size;
+size_t vec_len(vec_t* self) {
+    return self->len / self->elem_sz;
 }
 
-void vec_free(Vec* self) {
+void* vec_at(vec_t* self, size_t index)
+{
+    return vec_raw(self) + index;
+}
+
+void vec_push(vec_t* self, void* value) {
+    do {
+        if (!vec_grow(self, 1)) {
+            exit(EXIT_FAILURE);
+        }
+        memcpy(vec_at(self, vec_len(self) - 1), value, self->elem_sz);
+    } while (false);
+}
+
+void vec_free(vec_t* self) {
     // NOTE: `free` is NOOP for `NULL` pointers.
     free(self->buffer);
 }
