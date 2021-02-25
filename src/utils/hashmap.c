@@ -40,15 +40,17 @@ bool iszero(void *p, size_t len)
 
 
 // Initialize the hashmap pointed to by h.
-void hashmap_init(hashmap_t* h, size_t ksize, size_t vsize)
+hashmap_t hashmap_new(size_t ksize, size_t vsize)
 {
+    hashmap_t h;
     // Keys and vals are in different arrays so unnecessary things aren't in cache
-    h->keys = calloc(HASHMAP_INIT_SIZE, ksize);
-    h->vals = malloc(vsize * HASHMAP_INIT_SIZE);
-    h->k_sz = ksize;
-    h->v_sz = vsize;
-    h->len = HASHMAP_INIT_SIZE;
-    h->filled = 0; // Store # of filled keys for load factor calculation
+    h.keys = calloc(HASHMAP_INIT_SIZE, ksize);
+    h.vals = malloc(vsize * HASHMAP_INIT_SIZE);
+    h.k_sz = ksize;
+    h.v_sz = vsize;
+    h.len = HASHMAP_INIT_SIZE;
+    h.filled = 0; // Store # of filled keys for load factor calculation
+    return h;
 }
 
 void hashmap_resize(hashmap_t* h)

@@ -35,8 +35,7 @@ int main() {
     vec_push(&test, &val4);
     log_debug("test[0] = %d", *(int*)vec_at(&test, 0));
 
-    hashmap_t h;
-    hashmap_init(&h, sizeof(int), sizeof(double));
+    hashmap_t h = hashmap_new(sizeof(int), sizeof(double));
     int keys[20];
     for (int i = 0; i < 20; i++) {
         int key = rand() % 128;
