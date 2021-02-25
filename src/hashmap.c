@@ -63,8 +63,7 @@ void hashmap_resize(hashmap_t* h)
     for (size_t off = 0; off < (h->len / 2); off++) {
         // Don't bother copying entries with empty keys
         if (!iszero(tempk + (off*h->k_sz), h->k_sz)) {
-            memcpy(h->vals + (off*h->v_sz), tempv + (off*h->v_sz), h->v_sz);
-            memcpy(h->keys + (off*h->k_sz), tempk + (off*h->k_sz), h->k_sz);
+            hashmap_set(h, tempk + (off*h->k_sz), tempv + (off*h->v_sz));
         }
     }
     free(tempk);
@@ -127,6 +126,7 @@ void* hashmap_get(hashmap_t* h, void* k)
             printf ("empty key.\n");
             return 0x0;
         }
+        printf("different key.\n");
         // If we hit the end, wrap back around the hashmap. Only do this once.
         if (off == h->len-1 && looped_once == 0) {
             printf("Wrapping around.\n");
