@@ -36,14 +36,19 @@ int main() {
 
     hashmap_t h;
     hashmap_init(&h, sizeof(int), sizeof(double));
-    for (int i = 0; i < 128; i++) {
+    int keys[20];
+    for (int i = 0; i < 20; i++) {
         int key = rand() % 128;
-        double val = rand();        
+        double val = rand();
         printf("Inserting pair %d %f\n", key, val);
+    keys[i] = key;
         hashmap_set(&h, &key, &val);
     }
-    for (int i = 0; i < 128; i++) {
-        double val = *(double*)hashmap_get(&h, &i);
-        printf("Read pair %d %f\n", i, val);
+    for (int i = 0; i < 20; i++) {
+        printf("Trying to read key %d\n", keys[i]);
+        void* addr = hashmap_get(&h, &keys[i]);
+        printf("Addr %p\n", addr);
+        double val = *(double*)addr;
+        printf("Read pair %d %f\n", keys[i], val);
     }
 }
