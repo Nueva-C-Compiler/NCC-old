@@ -17,12 +17,16 @@ jobs:
       shell: bash
       run: git submodule update --init --recursive
       
+    - name: Generate build files
+      working-directory: ${{github.workspace}}
+      shell: bash
+      run: cmake . -DCMAKE_BUILD_TYPE=$BUILD_TYPE
+
     - name: Build
       working-directory: ${{github.workspace}}
       shell: bash
-      # Execute the build.  You can specify a specific target with "--target <NAME>"
-      run: cmake . -DCMAKE_BUILD_TYPE=$BUILD_TYPE
-
+      run: make
+      
     - name: Test
       working-directory: ${{github.workspace}}
       shell: bash
