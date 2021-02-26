@@ -44,11 +44,17 @@ bool iszero(void *p, size_t len)
 hashmap_t hashmap_new(size_t ksize, size_t vsize)
 {
     hashmap_t h;
+    hashmap_t fail = {NULL, NULL, 0, 0, 0, 0};
     // Keys and vals are in different arrays so unnecessary things aren't in cache
     h.keys = calloc(HASHMAP_INIT_SIZE, ksize);
     h.vals = malloc(vsize * HASHMAP_INIT_SIZE);
-    if (h.keys == NULL || h.vals == NULL) {
-        hashmap_t fail = {NULL, NULL, 0, 0, 0, 0};
+    if (h.keys == NULL && h.vals == NULL) return fail;
+    else if (h.keys == NULL) {
+        free(h.vals);
+        return fail;
+    }
+    else if (h.vals == NULL) {
+        free(h.keys);
         return fail;
     }
     h.k_sz = ksize;

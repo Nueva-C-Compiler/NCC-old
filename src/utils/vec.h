@@ -13,7 +13,7 @@ typedef struct vec_t
 /**
  * Creates a new vector of element size elem_sz with length `0`. Nothing is allocated at this stage.
  */
-vec_t vec_new(size_t elem_sz);
+vec_t vec_new(size_t elem_size);
 
 /**
  * Grows the a vector by the specified element count (internally elem_sz * count bytes).
