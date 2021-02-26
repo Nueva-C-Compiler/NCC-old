@@ -1,10 +1,8 @@
-
-
 #include <stdio.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/types.h>
-
+#include <stdbool.h>
 
 #define SECTOR_SIZE 4096
 
@@ -22,13 +20,14 @@ int advance()
     if (forward != &current_buf[SECTOR_SIZE]-1) forward++;
     else {
         ssize_t bytes_read = read(src, standby_buf, SECTOR_SIZE);
-        if (bytes_read == -1) return -1;
-        else if (bytes_read == 0) return 0;
+        if (bytes_read == -1) return 0;
+        else if (bytes_read == 0) return 1;
         forward = &standby_buf[0];
         char* tmp = current_buf;
         current_buf = standby_buf;
         standby_buf = tmp;
     }
+    return 0;
 }
 
 int main(int argc, char** argv) {
@@ -43,10 +42,7 @@ int main(int argc, char** argv) {
         return -1;
     }
     else if (bytes_read == 0) return -1;
-    while (advance() > 0) {
+    while (advance()) {
         printf("%c", *forward);
     }
 }
-
-
-
