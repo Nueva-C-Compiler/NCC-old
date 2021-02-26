@@ -11,7 +11,7 @@ typedef struct hashmap_t {
 
 /**
  * Constructs a new hashmap_t.
- * @returns constructed hashmap_t or a completely blank hashmap_t in case of failure.
+ * @returns constructed hashmap_t.
  */
 hashmap_t hashmap_new(size_t ksize, size_t vsize);
 

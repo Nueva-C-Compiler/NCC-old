@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <math.h>
 
 #include "hashmap.h"
 #include "panic.h"
@@ -43,22 +44,10 @@ bool iszero(void *p, size_t len)
 hashmap_t hashmap_new(size_t ksize, size_t vsize)
 {
     hashmap_t h;
-    hashmap_t fail = {NULL, NULL, 0, 0, 0, 0};
     // Keys and vals are in different arrays so unnecessary things aren't in cache
-    h.keys = calloc(HASHMAP_INIT_SIZE, ksize);
-    h.vals = malloc(vsize * HASHMAP_INIT_SIZE);
-    if (h.keys == NULL && h.vals == NULL) return fail;
-    else if (h.keys == NULL) {
-        free(h.vals);
-        return fail;
-    }
-    else if (h.vals == NULL) {
-        free(h.keys);
-        return fail;
-    }
     h.k_sz = ksize;
     h.v_sz = vsize;
-    h.len = HASHMAP_INIT_SIZE;
+    h.len = 0;
     h.filled = 0; // Store # of filled keys for load factor calculation
     return h;
 }
@@ -67,7 +56,15 @@ bool hashmap_resize(hashmap_t* h)
 {
     void* tempk = h->keys;
     void* tempv = h->vals;
-    h->len *= 2;
+    if (h->len == 0) h->len = 2;
+    else h->len *= 2;
+    h->keys = calloc(h->len, h->k_sz);
+    h->vals = malloc(h->len * h->v_sz);
+    if (h->keys == NULL && h->vals == NULL) {
+        free(h->keys);
+        free(h->vals);
+        return false;
+    }
     log_debug("Resizing to %d items", h->len);
     // Copy all keys and values
     for (size_t off = 0; off < (h->len / 2); off++) {
@@ -84,11 +81,10 @@ bool hashmap_resize(hashmap_t* h)
 bool hashmap_set(hashmap_t* h, void* k, void* v)
 {
     // Check if load factor too high
-    if ((float)h->filled / h->len > (float)2/3) {
+    if (h->filled * 3 < h->len * 2) {
         if (!hashmap_resize(h)) return false;
     }
     size_t index = hash(k, h->k_sz) % h->len;
-    bool looped_once = false;
     // Start at the hashed index, iterate until own key or empty key is found
     for (size_t off = index; off < h->len; off+=1) {
         // Check if stored key at hashed index is equal to key: if so, replace value
@@ -103,10 +99,7 @@ bool hashmap_set(hashmap_t* h, void* k, void* v)
             memcpy(h->keys + (off*h->k_sz), k, h->k_sz);
             return true;
         }
-        if (off == h->len-1 && looped_once == false ) {
-            off = 0;
-            looped_once = true;
-        }
+        if (off == h->len-1) off = 0;
     }
     // Unreachable state, panic
     panic("Hashmap somehow full.", UNREACHABLE_STATE);
@@ -115,7 +108,6 @@ bool hashmap_set(hashmap_t* h, void* k, void* v)
 void* hashmap_get(hashmap_t* h, void* k)
 {
     size_t index = hash(k, h->k_sz) % h->len;
-    bool looped_once = false;
     // Start at the hashed index, iterate until wanted key or empty key is found
     for (size_t off = index; off < h->len; off+=1) {
         // Check if entry has correct key
@@ -127,11 +119,7 @@ void* hashmap_get(hashmap_t* h, void* k)
             return NULL;
         }
         // If we hit the end, wrap back around the hashmap.
-        if (off == h->len-1 && looped_once == true) {
-            off = 0;
-            looped_once == false;
-        }
-
+        if (off == h->len-1) off = 0;
     }
     return NULL;
 }
@@ -139,7 +127,6 @@ void* hashmap_get(hashmap_t* h, void* k)
 bool hashmap_del(hashmap_t* h, void* k)
 {
     size_t index = hash(k, h->k_sz) % h->len;
-    bool looped_once = false;
     for (size_t off = index; off < h->len; off+=1) {
         if (memcmp(h->keys + (off * h->k_sz), k, h->k_sz) == 0) {
             memset(h->keys + (off * h->v_sz), 0, h->k_sz);
@@ -147,10 +134,7 @@ bool hashmap_del(hashmap_t* h, void* k)
             return true;
         }
         if (iszero(h->keys + (off * h->k_sz), h->k_sz)) return false;
-        if (off == h->len-1 && looped_once == false) {
-            off = 0;
-            looped_once = true;
-        }
+        if (off == h->len-1) off = 0;
     }
     return false;
 }
