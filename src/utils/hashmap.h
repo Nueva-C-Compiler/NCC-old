@@ -11,25 +11,26 @@ typedef struct hashmap_t {
 
 /**
  * Constructs a new hashmap_t.
- * Returns constructed hashmap_t, returns NULL if allocation failed.
+ * @returns constructed hashmap_t or a completely blank hashmap_t in case of failure.
  */
 hashmap_t hashmap_new(size_t ksize, size_t vsize);
 
 /**
  * Sets a key-value pair in the hashmap_t passed to it.
- * @retuens Returns false for failure, true for success.
+ * NOTE: Will panic on full hashmap
+ * @returns false for failure, true for success.
  */
 bool hashmap_set(hashmap_t* h, void* k, void* v);
 
 /**
  * Get value associated with key in hashmap.
- * @returns Returns address of value associated with key in hashmap if it exists, otherwise returns NULL if no matching key found.
+ * @returns address of value associated with key in hashmap if it exists, otherwise returns NULL if no matching key found.
  */
 void* hashmap_get(hashmap_t* h, void* k);
 
 /**
  * Deletes key in hashmap (but not value).
- * @returns Returns false for failure, true for success.
+ * @returns false for failure, true for success.
  */
 bool hashmap_del(hashmap_t* h, void* k);
 

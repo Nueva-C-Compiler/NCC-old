@@ -2,8 +2,8 @@
 #include <log.h>
 #include "stdlib.h"
 
-void panic(const char* what, enum panic_type type)
+void panic(const char* what, const char* where, enum panic_type type)
 {
-    log_fatal("Panic: '%s'", what);
+    log_fatal("%s: Raise panic  '%s'", where, what);
     exit(1);
 }

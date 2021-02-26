@@ -6,4 +6,4 @@ enum panic_type {
 /**
  * Logs error message 'what' to FATAL, exits.
  */
-void panic(const char* what, enum panic_type type);
+void panic(const char* what, const char* where, enum panic_type type);
