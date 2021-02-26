@@ -11,7 +11,7 @@ if (DEBUG)
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DDEBUG")
 endif()
 
-add_executable(ncc_bin src/main.c src/utils/hashmap.c src/utils/vec.c)
+add_executable(ncc_bin src/main.c src/utils/hashmap.c src/utils/vec.c src/utils/panic.c)
 add_library(log STATIC deps/log/src/log.c)
 target_link_libraries(ncc_bin log m)
 
