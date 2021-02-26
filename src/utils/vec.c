@@ -5,8 +5,8 @@
 #include <string.h>
 #include <math.h>
 
-struct vec_t vec_new(size_t elem_size) {
-    struct vec_t vec = {
+ vec_t vec_new(size_t elem_size) {
+    vec_t vec = {
             .buffer = NULL,
             .len = 0,
             .cap = 0,
