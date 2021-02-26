@@ -5,6 +5,7 @@
 #include <stdbool.h>
 
 #include "hashmap.h"
+#include "panic.h"
 #include <log.h>
 
 
@@ -46,6 +47,10 @@ hashmap_t hashmap_new(size_t ksize, size_t vsize)
     // Keys and vals are in different arrays so unnecessary things aren't in cache
     h.keys = calloc(HASHMAP_INIT_SIZE, ksize);
     h.vals = malloc(vsize * HASHMAP_INIT_SIZE);
+    if (h.keys == NULL || h.vals == NULL) {
+        hashmap_t fail = {NULL, NULL, 0, 0, 0, 0};
+        return fail;
+    }
     h.k_sz = ksize;
     h.v_sz = vsize;
     h.len = HASHMAP_INIT_SIZE;
@@ -62,9 +67,7 @@ bool hashmap_resize(hashmap_t* h)
     // Simple to use calloc here because keys need to be initialized to zero.
     h->keys = calloc(h->len, h->k_sz);
     h->vals = malloc(h->len * h->v_sz);
-    if (h->keys == NULL || h->vals == NULL) {
-        return false;
-    }
+    if (h->keys == NULL || h->vals == NULL) return false;
     // Copy all keys and values
     for (size_t off = 0; off < (h->len / 2); off++) {
         // Don't bother copying entries with empty keys
@@ -105,8 +108,7 @@ bool hashmap_set(hashmap_t* h, void* k, void* v)
         }
     }
     // Unreachable state, panic
-    log_fatal("Hashmap somehow full during insertion - exiting...");
-    exit(1);
+    panic("Hashmap somehow full.", UNREACHABLE_STATE);
 }
 
 // Returns address of value if it exists, otherwise returns 0x0 for no value or 0x1 for full table.
@@ -130,9 +132,11 @@ void* hashmap_get(hashmap_t* h, void* k)
             looped_once = 1;
         }
     }
+    // Unreachable state, panic
+    panic("Hashmap somehow full.", UNREACHABLE_STATE);
 }
 
-int hashmap_del(hashmap_t* h, void* k)
+bool hashmap_del(hashmap_t* h, void* k)
 {
     size_t index = hash(k, h->k_sz) % h->len;
     int looped_once = 0;
@@ -140,15 +144,16 @@ int hashmap_del(hashmap_t* h, void* k)
         if (memcmp(h->keys + (off * h->k_sz), k, h->k_sz) == 0) {
             memset(h->keys + (off * h->v_sz), 0, h->k_sz);
             // No reason to delete value, will just be overwritten next time.
-            return 0;
+            return true;
         }
-        if (iszero(h->keys + (off * h->k_sz), h->k_sz)) return 1;
+        if (iszero(h->keys + (off * h->k_sz), h->k_sz)) return false;
         if (off == h->len-1 && looped_once == 0) {
             off = 0;
             looped_once = 1;
         }
     }
-    return 1;
+    // Unreachable state, panic
+    panic("Hashmap somehow full.", UNREACHABLE_STATE);
 }
 
 void hashmap_free(hashmap_t* h)
