@@ -16,8 +16,7 @@ typedef struct hashmap_t {
 hashmap_t hashmap_new(size_t ksize, size_t vsize);
 
 /**
- * Sets a key-value pair in the hashmap_t passed to it.
- * NOTE: Will panic on full hashmap
+ * Sets a key-value pair in the hashmap_t passed to it. NOTE: Key cannot be NULL or 0.
  * @returns false for failure, true for success.
  */
 bool hashmap_set(hashmap_t* h, void* k, void* v);

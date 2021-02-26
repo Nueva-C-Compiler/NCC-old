@@ -40,7 +40,6 @@ bool iszero(void *p, size_t len)
 }
 
 
-// Initialize the hashmap pointed to by h.
 hashmap_t hashmap_new(size_t ksize, size_t vsize)
 {
     hashmap_t h;
@@ -89,6 +88,7 @@ bool hashmap_set(hashmap_t* h, void* k, void* v)
         if (!hashmap_resize(h)) return false;
     }
     size_t index = hash(k, h->k_sz) % h->len;
+    bool looped_once = false;
     // Start at the hashed index, iterate until own key or empty key is found
     for (size_t off = index; off < h->len; off+=1) {
         // Check if stored key at hashed index is equal to key: if so, replace value
@@ -103,16 +103,19 @@ bool hashmap_set(hashmap_t* h, void* k, void* v)
             memcpy(h->keys + (off*h->k_sz), k, h->k_sz);
             return true;
         }
-        if (off == h->len-1) off = 0;
+        if (off == h->len-1 && looped_once == false ) {
+            off = 0;
+            looped_once = true;
+        }
     }
     // Unreachable state, panic
     panic("Hashmap somehow full.", UNREACHABLE_STATE);
 }
 
-// Returns address of value if it exists, otherwise returns 0x0 for no value or 0x1 for full table.
 void* hashmap_get(hashmap_t* h, void* k)
 {
     size_t index = hash(k, h->k_sz) % h->len;
+    bool looped_once = false;
     // Start at the hashed index, iterate until wanted key or empty key is found
     for (size_t off = index; off < h->len; off+=1) {
         // Check if entry has correct key
@@ -124,7 +127,10 @@ void* hashmap_get(hashmap_t* h, void* k)
             return NULL;
         }
         // If we hit the end, wrap back around the hashmap.
-        if (off == h->len-1) off = 0;
+        if (off == h->len-1 && looped_once == true) {
+            off = 0;
+            looped_once == false;
+        }
 
     }
     return NULL;
@@ -133,6 +139,7 @@ void* hashmap_get(hashmap_t* h, void* k)
 bool hashmap_del(hashmap_t* h, void* k)
 {
     size_t index = hash(k, h->k_sz) % h->len;
+    bool looped_once = false;
     for (size_t off = index; off < h->len; off+=1) {
         if (memcmp(h->keys + (off * h->k_sz), k, h->k_sz) == 0) {
             memset(h->keys + (off * h->v_sz), 0, h->k_sz);
@@ -140,7 +147,10 @@ bool hashmap_del(hashmap_t* h, void* k)
             return true;
         }
         if (iszero(h->keys + (off * h->k_sz), h->k_sz)) return false;
-        if (off == h->len-1) off = 0;
+        if (off == h->len-1 && looped_once == false) {
+            off = 0;
+            looped_once = true;
+        }
     }
     return false;
 }
