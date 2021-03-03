@@ -9,9 +9,6 @@
 #include "panic.h"
 #include <log.h>
 
-
-#define HASHMAP_INIT_SIZE 16
-
 // djb2 hash
 // http://www.cse.yorku.ca/~oz/hash.html
 size_t hash(char* p, size_t sz)
@@ -45,6 +42,8 @@ hashmap_t hashmap_new(size_t ksize, size_t vsize)
 {
     hashmap_t h;
     // Keys and vals are in different arrays so unnecessary things aren't in cache
+    h.keys = NULL;
+    h.vals = NULL;
     h.k_sz = ksize;
     h.v_sz = vsize;
     h.len = 0;
@@ -66,6 +65,7 @@ bool hashmap_resize(hashmap_t* h)
         return false;
     }
     log_debug("Resizing to %d items", h->len);
+    if (tempv == NULL && tempk == NULL) return true;
     // Copy all keys and values
     for (size_t off = 0; off < (h->len / 2); off++) {
         // Don't bother copying entries with empty keys
@@ -76,12 +76,13 @@ bool hashmap_resize(hashmap_t* h)
     }
     free(tempk);
     free(tempv);
+    return true;
 }
 
 bool hashmap_set(hashmap_t* h, void* k, void* v)
 {
     // Check if load factor too high
-    if (h->filled * 3 < h->len * 2) {
+    if ((float)h->filled/h->len >= (float)2/3 || h->len == 0) {
         if (!hashmap_resize(h)) return false;
     }
     size_t index = hash(k, h->k_sz) % h->len;
@@ -141,6 +142,7 @@ bool hashmap_del(hashmap_t* h, void* k)
 
 void hashmap_free(hashmap_t* h)
 {
+    log_debug("Freeing %p %p (%d %f)", h->keys, h->vals, *(int*)h->keys, *(double*)h->vals);
     free(h->keys);
     free(h->vals);
 }

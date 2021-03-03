@@ -1,6 +1,7 @@
 enum panic_type {
     UNREACHABLE_STATE,
     NULLPTR,
+    BAD_INPUT,
 };
 
 /**
