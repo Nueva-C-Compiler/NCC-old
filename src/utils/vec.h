@@ -11,9 +11,9 @@ typedef struct vec_t
 } vec_t;
 
 /**
- * Creates a new vector with length `0`. Nothing is allocated at this stage.
+ * Creates a new vector of element size elem_sz with length `0`. Nothing is allocated at this stage.
  */
-vec_t vec_new();
+vec_t vec_new(size_t elem_size);
 
 /**
  * Grows the a vector by the specified element count (internally elem_sz * count bytes).
@@ -54,4 +54,9 @@ void* vec_at(vec_t* self, size_t index);
  */
 bool vec_push(vec_t* self, void* value);
 
+
+/**
+ * Pop a value off the end of the vector.
+ * @returns nothing.
+ */
 void vec_pop(vec_t* self);

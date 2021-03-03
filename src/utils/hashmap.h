@@ -9,17 +9,31 @@ typedef struct hashmap_t {
     size_t filled;
 } hashmap_t;
 
-// Generates a new hashmap_t.
+/**
+ * Constructs a new hashmap_t.
+ * @returns constructed hashmap_t.
+ */
 hashmap_t hashmap_new(size_t ksize, size_t vsize);
 
-// Sets a key-value pair in the hashmap_t passed to it. Returns 0x0 for success, 0x1 for failure.
-int hashmap_set(hashmap_t* h, void* k, void* v);
+/**
+ * Sets a key-value pair in the hashmap_t passed to it. NOTE: Key cannot be NULL or 0.
+ * @returns false for failure, true for success.
+ */
+bool hashmap_set(hashmap_t* h, void* k, void* v);
 
-// Returns address of value associated with key in hashmap if it exists, otherwise returns 0x0 for no value or 0x1 for full table.
+/**
+ * Get value associated with key in hashmap.
+ * @returns address of value associated with key in hashmap if it exists, otherwise returns NULL if no matching key found.
+ */
 void* hashmap_get(hashmap_t* h, void* k);
 
-// Deletes key in hashmap (but not value).
-int hashmap_del(hashmap_t* h, void* k);
+/**
+ * Deletes key in hashmap (but not value).
+ * @returns false for failure, true for success.
+ */
+bool hashmap_del(hashmap_t* h, void* k);
 
-// Frees a hashmap.
+/**
+ * Frees the hashmap.
+ */
 void hashmap_free(hashmap_t* h);
